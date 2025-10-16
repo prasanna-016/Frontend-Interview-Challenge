@@ -11,76 +11,73 @@
  * 3. Consider memoization for performance
  * 4. Think about how to make this reusable for both day and week views
  */
-
 import { useState, useEffect, useMemo } from 'react';
 import type { Appointment, Doctor } from '@/types';
 import { appointmentService } from '@/services/appointmentService';
 
 /**
- * Hook parameters
+ * Parameters for useAppointments hook
  */
 interface UseAppointmentsParams {
   doctorId: string;
-  date: Date;
-  // For week view, you might want to pass a date range instead
-  startDate?: Date;
-  endDate?: Date;
+  date?: Date; // Used for day view
+  startDate?: Date; // Used for week view (range)
+  endDate?: Date;   // Used for week view (range)
 }
 
 /**
- * Hook return value
+ * Return type for useAppointments hook
  */
 interface UseAppointmentsReturn {
   appointments: Appointment[];
   doctor: Doctor | undefined;
   loading: boolean;
   error: Error | null;
-  // Add any other useful data or functions
+  // Any additional useful data/functions can go here
 }
 
 /**
- * useAppointments Hook
+ * useAppointments custom React hook
  *
- * Fetches and manages appointment data for a given doctor and date/date range.
- *
- * TODO: Implement this hook
- *
- * Tips:
- * - Use useState for loading and error states
- * - Use useEffect to fetch data when params change
- * - Use useMemo to memoize expensive computations
- * - Consider how to handle both single date (day view) and date range (week view)
+ * Fetches and manages appointment data for the specified doctor and date/date range.
+ * Handles both day and week (range) views.
  */
 export function useAppointments(params: UseAppointmentsParams): UseAppointmentsReturn {
   const { doctorId, date, startDate, endDate } = params;
 
-  // TODO: Add state for appointments, loading, error
+  // State variables for appointments, loading, and error
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
-  // TODO: Fetch doctor data
+  // Memoized doctor data so lookups are not repeated unnecessarily
   const doctor = useMemo(() => {
-    // Implement: Get doctor by ID
-    // return appointmentService.getDoctorById(doctorId);
-    return undefined;
+    return appointmentService.getDoctorById(doctorId);
   }, [doctorId]);
 
-  // TODO: Fetch appointments when dependencies change
+  // Fetch appointments on relevant param changes
   useEffect(() => {
-    // Implement: Fetch appointments
-    // Consider:
-    // - If startDate and endDate are provided, use date range
-    // - Otherwise, use single date
-    // - Set loading state
-    // - Handle errors
-    // - Set appointments
+    setLoading(true);
+    setError(null);
 
-    console.log('TODO: Fetch appointments for', { doctorId, date, startDate, endDate });
+    try {
+      let data: Appointment[] = [];
+      if (startDate && endDate) {
+        // Week view: fetch by date range
+        data = appointmentService.getAppointmentsByDoctorAndDateRange(doctorId, startDate, endDate);
+      } else if (date) {
+        // Day view: fetch for single date
+        data = appointmentService.getAppointmentsByDoctorAndDate(doctorId, date);
+      } // else, keep empty
 
-    // Placeholder - remove when implementing
-    setLoading(false);
-  }, [doctorId, date, startDate, endDate]);
+      setAppointments(data);
+    } catch (err) {
+      setError(err as Error);
+      setAppointments([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [doctorId, date?.toDateString(), startDate?.toDateString(), endDate?.toDateString()]);
 
   return {
     appointments,
@@ -91,10 +88,24 @@ export function useAppointments(params: UseAppointmentsParams): UseAppointmentsR
 }
 
 /**
- * BONUS: Create additional hooks for specific use cases
- *
- * Examples:
- * - useDayViewAppointments(doctorId: string, date: Date)
- * - useWeekViewAppointments(doctorId: string, weekStartDate: Date)
- * - useDoctors() - hook to get all doctors
+ * BONUS: Additional hooks for convenience/use-cases
  */
+
+// For day view: simplify usage
+export function useDayViewAppointments(doctorId: string, date: Date) {
+  return useAppointments({ doctorId, date });
+}
+
+// For week view: simplifies range handling
+export function useWeekViewAppointments(doctorId: string, weekStart: Date) {
+  // endDate is exclusive: add +7 days
+  const endDate = new Date(weekStart);
+  endDate.setDate(weekStart.getDate() + 7);
+  return useAppointments({ doctorId, startDate: weekStart, endDate });
+}
+
+// Hook for all doctors list, if needed elsewhere
+export function useDoctors(): Doctor[] {
+  // For basic use, just return synchronously
+  return useMemo(() => appointmentService.getAllDoctors(), []);
+}
