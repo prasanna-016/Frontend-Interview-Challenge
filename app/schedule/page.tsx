@@ -2,12 +2,11 @@
  * Schedule Page
  *
  * Main page for the appointment scheduler.
- * This is where candidates will implement the calendar views.
+ * This is where the calendar views are rendered.
  *
- * TODO for candidates:
- * 1. Import and use the ScheduleView component
- * 2. Set up state for selected doctor and date
- * 3. Handle view switching (day/week)
+ * 1. Imports and uses the ScheduleView component
+ * 2. Sets up state for selected doctor and date
+ * 3. Handles view switching (day/week)
  */
 
 'use client';
@@ -15,11 +14,13 @@
 import { useState } from 'react';
 import { MOCK_DOCTORS } from '@/data/mockData';
 import type { CalendarView } from '@/types';
+import { format } from 'date-fns';
 
-// TODO: Import your components here
-// import { ScheduleView } from '@/components/ScheduleView';
+// Import your ScheduleView component here
+import { ScheduleView } from '@/components/ScheduleView';
 
 export default function SchedulePage() {
+  // State for currently selected doctor, date, and calendar view
   const [selectedDoctorId, setSelectedDoctorId] = useState<string>(MOCK_DOCTORS[0].id);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [view, setView] = useState<CalendarView>('day');
@@ -36,27 +37,7 @@ export default function SchedulePage() {
           </p>
         </header>
 
-        {/* TODO: Replace this placeholder with your ScheduleView component */}
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <div className="text-center text-gray-500 py-12">
-            <p className="text-lg mb-4">
-              Schedule View Component Goes Here
-            </p>
-            <p className="text-sm">
-              Implement the ScheduleView component to display the calendar
-            </p>
-
-            <div className="mt-8 text-left max-w-md mx-auto space-y-2">
-              <p className="font-semibold text-gray-700">Current State:</p>
-              <p className="text-sm">Doctor: {selectedDoctorId}</p>
-              <p className="text-sm">Date: {selectedDate.toLocaleDateString()}</p>
-              <p className="text-sm">View: {view}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* TODO: Uncomment and use when ScheduleView is implemented */}
-        {/*
+        {/* Render the ScheduleView component (remove the placeholder) */}
         <ScheduleView
           selectedDoctorId={selectedDoctorId}
           selectedDate={selectedDate}
@@ -65,7 +46,15 @@ export default function SchedulePage() {
           onDateChange={setSelectedDate}
           onViewChange={setView}
         />
-        */}
+
+        {/* Developer/debug output: Current State */}
+        <div className="mt-8 text-left max-w-md mx-auto space-y-2">
+          <p className="font-semibold text-gray-700">Current State:</p>
+          <p className="text-sm">Doctor: {selectedDoctorId}</p>
+          {/* Use a fixed date format to avoid hydration errors */}
+          <p className="text-sm">Date: {format(selectedDate, 'dd/MM/yyyy')}</p>
+          <p className="text-sm">View: {view}</p>
+        </div>
       </div>
     </main>
   );
