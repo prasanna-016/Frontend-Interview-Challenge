@@ -1,9 +1,8 @@
 /**
  * Type Definitions for Hospital Appointment Scheduler
  * 
- * DO NOT modify these types except for extending in your UI/data-use cases.
- * If you want direct access to `patient.name` or `doctor.name` while rendering,
- * use the PopulatedAppointment interface for display purposes.
+ * Only extend these as needed for your UI/data cases. For UI display, 
+ * use `PopulatedAppointment` to access patient/doctor info directly.
  */
 
 /**
@@ -12,7 +11,7 @@
 export type AppointmentType = 'checkup' | 'consultation' | 'follow-up' | 'procedure';
 
 /**
- * Medical specialties.
+ * Supported medical specialties for doctors.
  */
 export type Specialty =
   | 'cardiology'
@@ -22,13 +21,19 @@ export type Specialty =
   | 'dermatology';
 
 /**
- * Days of the week.
+ * Days of the week for scheduling/working hours.
  */
-export type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+export type DayOfWeek =
+  | 'monday'
+  | 'tuesday'
+  | 'wednesday'
+  | 'thursday'
+  | 'friday'
+  | 'saturday'
+  | 'sunday';
 
 /**
- * Doctor working hours for a single day.
- * start/end in "HH:MM" 24h format (e.g. "09:00")
+ * Working hours for a single weekday, in 24-hour time (e.g. "09:00").
  */
 export interface WorkingHours {
   start: string;
@@ -36,12 +41,12 @@ export interface WorkingHours {
 }
 
 /**
- * Weekly doctor schedule: maps days to working hours (can be partial).
+ * Doctor's weekly working schedule. Can omit days for part-time/variable schedules.
  */
 export type WeeklySchedule = Partial<Record<DayOfWeek, WorkingHours>>;
 
 /**
- * Doctor entity.
+ * Doctor entity definition.
  */
 export interface Doctor {
   id: string;
@@ -53,7 +58,7 @@ export interface Doctor {
 }
 
 /**
- * Patient entity.
+ * Patient entity definition.
  */
 export interface Patient {
   id: string;
@@ -64,27 +69,27 @@ export interface Patient {
 }
 
 /**
- * Appointment entity.
- * (You cannot access patientName here; for display use PopulatedAppointment)
+ * Basic appointment entity.
+ * For display requiring patient/doctor info, use PopulatedAppointment instead.
  */
 export interface Appointment {
   id: string;
   patientId: string;
   doctorId: string;
   type: AppointmentType;
-  startTime: string;   // ISO datetime string
-  endTime: string;     // ISO datetime string
+  startTime: string; // ISO datetime string
+  endTime: string;   // ISO datetime string
   notes?: string;
   status: AppointmentStatus;
 }
 
 /**
- * Appointment status.
+ * Appointment status (current/finished/cancel/no show).
  */
 export type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled' | 'no-show';
 
 /**
- * View mode for the calendar.
+ * Calendar view mode (day or week).
  */
 export type CalendarView = 'day' | 'week';
 
@@ -98,9 +103,8 @@ export interface TimeSlot {
 }
 
 /**
- * Full appointment entity for display:
- * Use this interface (PopulatedAppointment) where the UI code requires direct
- * access to patient/doctor name or other entity info.
+ * For calendar display: Appointment with full patient and doctor info.
+ * Use this in UI components for direct display of names and details.
  */
 export interface PopulatedAppointment extends Appointment {
   patient: Patient;
@@ -108,7 +112,7 @@ export interface PopulatedAppointment extends Appointment {
 }
 
 /**
- * Filter options for appointment queries.
+ * Appointment query filter interface for hooks/services.
  */
 export interface AppointmentFilters {
   doctorId?: string;
@@ -120,12 +124,12 @@ export interface AppointmentFilters {
 }
 
 /**
- * Calendar configuration (for setup).
+ * Calendar configuration interface.
  */
 export interface CalendarConfig {
   startHour: number;      // e.g., 8 for 8AM
   endHour: number;        // e.g., 18 for 6PM
-  slotDuration: number;   // Slot size in minutes
+  slotDuration: number;   // Duration in minutes
 }
 
 /**
@@ -138,26 +142,26 @@ export const DEFAULT_CALENDAR_CONFIG: CalendarConfig = {
 };
 
 /**
- * Information about each appointment type, for labeling and color-coding.
+ * Info about each appointment type for display/metainfo.
  */
 export interface AppointmentTypeInfo {
   type: AppointmentType;
   label: string;
-  color: string;           // Hex color code for UI
-  defaultDuration: number; // Duration in minutes
+  color: string;            // Hex color for color-coding in UI
+  defaultDuration: number;  // Default time in minutes
 }
 
 /**
- * Lookup map from appointment type to metadata for that type.
+ * Lookup table for type metadata.
  */
 export const APPOINTMENT_TYPE_CONFIG: Record<AppointmentType, AppointmentTypeInfo> = {
-  'checkup': {
+  checkup: {
     type: 'checkup',
     label: 'General Checkup',
     color: '#3b82f6',
     defaultDuration: 30,
   },
-  'consultation': {
+  consultation: {
     type: 'consultation',
     label: 'Consultation',
     color: '#10b981',
@@ -169,7 +173,7 @@ export const APPOINTMENT_TYPE_CONFIG: Record<AppointmentType, AppointmentTypeInf
     color: '#f59e0b',
     defaultDuration: 30,
   },
-  'procedure': {
+  procedure: {
     type: 'procedure',
     label: 'Procedure',
     color: '#8b5cf6',

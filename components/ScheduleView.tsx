@@ -1,10 +1,9 @@
 /**
  * ScheduleView Component
  *
- * Main schedule container that organizes header, controls, and calendar views.
- * Composes DoctorSelector, DayView, WeekView, and glues their states/interactions together.
+ * Main container managing header, controls, and calendar views.
+ * Integrates DoctorSelector, DayView, WeekView with current states.
  */
-
 'use client';
 
 import { format, startOfWeek } from 'date-fns';
@@ -14,12 +13,12 @@ import { DoctorSelector } from './DoctorSelector';
 import { DayView } from './DayView';
 import { WeekView } from './WeekView';
 
-// Optional: support user roles ("front-desk" or "doctor")
+// Optional user role
 type UserRole = 'front-desk' | 'doctor';
 
-// Utility to get the current week's Monday for week view (used below)
+// Utility: get Monday of the current week for week selection
 function getWeekStart(date: Date) {
-  return startOfWeek(date, { weekStartsOn: 1 }); // 1 = Monday
+  return startOfWeek(date, { weekStartsOn: 1 }); // Monday as start
 }
 
 interface ScheduleViewProps {
@@ -29,7 +28,7 @@ interface ScheduleViewProps {
   onDoctorChange: (doctorId: string) => void;
   onDateChange: (date: Date) => void;
   onViewChange: (view: CalendarView) => void;
-  userRole?: UserRole; // Pass from parent if using role-based logic, else ignore
+  userRole?: UserRole;
 }
 
 export function ScheduleView({
@@ -39,19 +38,20 @@ export function ScheduleView({
   onDoctorChange,
   onDateChange,
   onViewChange,
-  userRole = 'front-desk' // Default, can be omitted
+  userRole = 'front-desk', // Default role
 }: ScheduleViewProps) {
-  // Fetch appointments and doctor info for current state (day or week)
+  // Use proper parameters for day or week view to fetch appointments
+  // The useAppointments hook now returns PopulatedAppointment[]
   const { appointments, doctor, loading, error } = useAppointments(
     view === 'week'
       ? {
           doctorId: selectedDoctorId,
           startDate: getWeekStart(selectedDate),
-          endDate: new Date(getWeekStart(selectedDate).getTime() + 7 * 86400000)
+          endDate: new Date(getWeekStart(selectedDate).getTime() + 7 * 86400000),
         }
       : {
           doctorId: selectedDoctorId,
-          date: selectedDate
+          date: selectedDate,
         }
   );
 
@@ -70,25 +70,21 @@ export function ScheduleView({
           </div>
 
           <div className="flex gap-4 flex-wrap items-center">
-            {/* Doctor selector: only for front-desk or role not set */}
-            {(userRole === 'front-desk') && (
-              <DoctorSelector
-                selectedDoctorId={selectedDoctorId}
-                onDoctorChange={onDoctorChange}
-              />
-            )}
-            {/* If doctor user, inform fixed doctor */}
-            {(userRole === 'doctor') && (
-              <div className="text-sm text-blue-700 italic">
-                Viewing your schedule only
-              </div>
+            {/* Show doctor selector only to front-desk users */}
+            {userRole === 'front-desk' && (
+              <DoctorSelector selectedDoctorId={selectedDoctorId} onDoctorChange={onDoctorChange} />
             )}
 
-            {/* Date picker: available to both roles */}
+            {/* Inform doctor users they are viewing their own schedule */}
+            {userRole === 'doctor' && (
+              <div className="text-sm text-blue-700 italic">Viewing your schedule only</div>
+            )}
+
+            {/* Date picker available to all user roles */}
             <input
               type="date"
               value={format(selectedDate, 'yyyy-MM-dd')}
-              onChange={e => onDateChange(new Date(e.target.value))}
+              onChange={(e) => onDateChange(new Date(e.target.value))}
               className="border rounded px-3 py-2 text-sm"
             />
 
@@ -96,9 +92,7 @@ export function ScheduleView({
             <div className="flex gap-2">
               <button
                 className={`px-4 py-2 text-sm rounded ${
-                  view === 'day'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-200 text-gray-700'
+                  view === 'day' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
                 }`}
                 onClick={() => onViewChange('day')}
               >
@@ -106,9 +100,7 @@ export function ScheduleView({
               </button>
               <button
                 className={`px-4 py-2 text-sm rounded ${
-                  view === 'week'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-200 text-gray-700'
+                  view === 'week' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
                 }`}
                 onClick={() => onViewChange('week')}
               >
@@ -119,20 +111,17 @@ export function ScheduleView({
         </div>
       </div>
 
-      {/* Calendar View (loading, error, or actual calendar) */}
+      {/* Main calendar view area */}
       <div className="p-6">
         {loading ? (
           <div className="py-10 text-center text-gray-500">Loading…</div>
         ) : error ? (
           <div className="py-10 text-center text-red-500">Error loading appointments.</div>
         ) : view === 'day' ? (
+          // Pass the appointments as PopulatedAppointment[] (from useAppointments hook)
           <DayView appointments={appointments} doctor={doctor} date={selectedDate} />
         ) : (
-          <WeekView
-            appointments={appointments}
-            doctor={doctor}
-            weekStartDate={getWeekStart(selectedDate)}
-          />
+          <WeekView appointments={appointments} doctor={doctor} weekStartDate={getWeekStart(selectedDate)} />
         )}
       </div>
     </div>
