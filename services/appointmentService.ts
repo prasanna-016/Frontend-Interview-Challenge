@@ -1,10 +1,10 @@
 /**
- * Appointment Service
- *
- * This service provides an abstraction layer for accessing appointment data.
- * Implements robust, timezone-safe filtering so calendar views always work.
- * Includes helpers for filtering, sorting, and testability.
+ * AppointmentService
+ * 
+ * Abstraction for accessing and managing appointment-related data.
+ * Provides robust, timezone-safe filtering and useful helpers for calendar views.
  */
+
 import type { Appointment, Doctor, Patient, PopulatedAppointment } from '@/types';
 import {
   MOCK_APPOINTMENTS,
@@ -15,8 +15,8 @@ import {
 } from '@/data/mockData';
 
 /**
- * Utility: Determines if two dates are the same year/month/day.
- * Ignores time and timezone, safe for UI and server.
+ * Checks if two dates represent the same calendar day,
+ * ignoring time components and timezone adjustments.
  */
 function isSameDay(dateA: Date, dateB: Date): boolean {
   return (
@@ -27,14 +27,15 @@ function isSameDay(dateA: Date, dateB: Date): boolean {
 }
 
 /**
- * Utility: Start of calendar day (midnight), for consistent range logic.
+ * Returns the start of a calendar day (midnight)
+ * for consistent date range comparisons.
  */
 function startOfDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
 /**
- * Utility: Add days to a date (returns new Date).
+ * Returns a new Date incremented by the specified number of days.
  */
 function addDays(date: Date, days: number): Date {
   const copy = new Date(date);
@@ -44,42 +45,38 @@ function addDays(date: Date, days: number): Date {
 
 export class AppointmentService {
   /**
-   * Get all appointments for a specific doctor (no date filtering)
-   *
-   * @param doctorId - The doctor's ID
+   * Retrieves all appointments for a specific doctor without filtering on date.
+   * @param doctorId - The doctor's unique identifier
+   * @returns Array of appointments for the doctor
    */
   getAppointmentsByDoctor(doctorId: string): Appointment[] {
     return MOCK_APPOINTMENTS.filter((apt) => apt.doctorId === doctorId);
   }
 
   /**
-   * Get appointments for a specific doctor on a specific date (Day View)
-   * Robust date-only matching across time zones.
-   *
-   * @param doctorId - The doctor's ID
-   * @param date - The date to filter by (calendar day)
+   * Retrieves all appointments for the doctor on a specific date.
+   * Implements calendar-day-only matching to handle timezones cleanly.
+   * @param doctorId - Doctor's ID
+   * @param date - Target calendar date
    */
   getAppointmentsByDoctorAndDate(doctorId: string, date: Date): Appointment[] {
     return MOCK_APPOINTMENTS.filter((apt) =>
-      apt.doctorId === doctorId &&
-      isSameDay(new Date(apt.startTime), date)
+      apt.doctorId === doctorId && isSameDay(new Date(apt.startTime), date)
     );
   }
 
   /**
-   * Get appointments for a doctor within a date range, inclusive of start, exclusive of end.
-   * Used for week view and other multi-day windows.
-   *
-   * @param doctorId - The doctor's ID
-   * @param startDate - Start of the range (inclusive, calendar day)
-   * @param endDate - End of the range (exclusive, calendar day)
+   * Retrieves appointments in a date range [startDate, endDate),
+   * inclusive of start, exclusive of end. Used for weekly views.
+   * @param doctorId - Doctor's ID
+   * @param startDate - Start date inclusive
+   * @param endDate - End date exclusive
    */
   getAppointmentsByDoctorAndDateRange(
     doctorId: string,
     startDate: Date,
     endDate: Date
   ): Appointment[] {
-    // Compare on calendar day boundaries for robustness.
     return MOCK_APPOINTMENTS.filter((apt) => {
       const aptDate = startOfDay(new Date(apt.startTime));
       return (
@@ -91,10 +88,11 @@ export class AppointmentService {
   }
 
   /**
-   * Get a populated appointment (including doctor/patient objects)
-   *
-   * @param appointment - The appointment base object
-   * @returns PopulatedAppointment or null if references missing
+   * Given a base appointment, returns a populated version where
+   * doctor and patient objects are included instead of just IDs.
+   * Returns null if doctor or patient not found.
+   * @param appointment - Base appointment record
+   * @returns PopulatedAppointment or null
    */
   getPopulatedAppointment(appointment: Appointment): PopulatedAppointment | null {
     const doctor = getDoctorById(appointment.doctorId);
@@ -107,22 +105,32 @@ export class AppointmentService {
     };
   }
 
-  /** Get all doctors. */
+  /**
+   * Returns all doctors.
+   */
   getAllDoctors(): Doctor[] {
     return MOCK_DOCTORS;
   }
 
-  /** Lookup a single doctor by ID. */
+  /**
+   * Retrieve a doctor by ID.
+   * @param id - Doctor's ID
+   * @returns Doctor object or undefined if not found
+   */
   getDoctorById(id: string): Doctor | undefined {
     return MOCK_DOCTORS.find((doc) => doc.id === id);
   }
 
-  /** BONUS: Filter appointments by type. */
+  /**
+   * Filter appointments by type (optional).
+   */
   getAppointmentsByType(type: string): Appointment[] {
     return MOCK_APPOINTMENTS.filter((apt) => apt.type === type);
   }
 
-  /** BONUS: Sort a given array of appointments by start time. */
+  /**
+   * Sort a list of appointments by start time ascending.
+   */
   sortAppointmentsByTime(appointments: Appointment[]): Appointment[] {
     return [...appointments].sort(
       (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
@@ -130,16 +138,15 @@ export class AppointmentService {
   }
 
   /**
-   * BONUS: Group overlapping appointments.
-   *
-   * @param appointments - Array of Appointment objects (same day)
-   * @returns Array of arrays (groups of overlapping appointments)
+   * Group appointments that overlap in time.
+   * Inputs must be sorted by start time.
+   * Returns array of overlapping groups.
    */
   getOverlappingAppointments(appointments: Appointment[]): Appointment[][] {
-    // Must be sorted to work as intended
     const sorted = this.sortAppointmentsByTime(appointments);
     const overlaps: Appointment[][] = [];
     let currentGroup: Appointment[] = [];
+
     sorted.forEach((apt) => {
       if (
         currentGroup.length === 0 ||
@@ -151,10 +158,14 @@ export class AppointmentService {
         currentGroup = [apt];
       }
     });
+
     if (currentGroup.length > 0) overlaps.push(currentGroup);
+
     return overlaps;
   }
 }
 
-/** Singleton instance for app-wide use. */
+/**
+ * Singleton service instance for app-wide use.
+ */
 export const appointmentService = new AppointmentService();
