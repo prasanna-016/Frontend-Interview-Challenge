@@ -371,3 +371,4 @@ If you encounter setup issues:
 - Check console for errors
 
 Good luck! 🚀
+ 
