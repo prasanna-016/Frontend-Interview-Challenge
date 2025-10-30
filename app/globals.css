@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+/* Custom appointment type colors (from types) */
+.appointment-checkup {
+  background-color: #3b82f6;
+  border-color: #2563eb;
+}
+
+.appointment-consultation {
+  background-color: #10b981;
+  border-color: #059669;
+}
+
+.appointment-follow-up {
+  background-color: #f59e0b;
+  border-color: #d97706;
+}
+
+.appointment-procedure {
+  background-color: #8b5cf6;
+  border-color: #7c3aed;
+}
